@@ -6,6 +6,7 @@ export type S3ReadStreamOptions = {
   s3: S3;
   maxLength: number;
   byteRange?: number;
+  currentCursorPos?: number;
 }
 
 export class S3ReadStream extends Readable {
@@ -23,7 +24,8 @@ export class S3ReadStream extends Readable {
 		this._maxContentLength = options.maxLength;
 		this._s3 = options.s3;
 		this._s3StreamParams = options.parameters;
-    this._s3DataRange = options.byteRange || 1024 * 1024;
+		this._currentCursorPosition = options.currentCursorPos || 0;
+    	this._s3DataRange = options.byteRange || 1024 * 1024;
 	}
   
   adjustByteRange(bytes: number) {
