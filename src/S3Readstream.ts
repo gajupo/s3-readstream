@@ -46,6 +46,8 @@ export class S3ReadStream extends Readable {
 					this.destroy(error);
 				} else {
 					this.push(data.Body);
+					// will terminate the stream flush
+					this.push(null);
 				}
 			});
 		}
