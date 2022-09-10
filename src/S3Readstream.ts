@@ -5,48 +5,37 @@ export type S3ReadStreamOptions = {
   parameters: S3.GetObjectRequest;
   s3: S3;
   maxLength: number;
-  byteRange?: number;
-  currentCursorPos?: number;
+  startByte: number;
+  endByte: number;
 }
 
 export class S3ReadStream extends Readable {
-	_currentCursorPosition = 0;
-	_s3DataRange: number;
 	_maxContentLength: number;
 	_s3: S3;
 	_s3StreamParams: S3.GetObjectRequest;
+	_startByte: number;
+	_endByte: number;
 
-	constructor(
-    options: S3ReadStreamOptions,
-		nodeReadableStreamOptions?: ReadableOptions
-	) {
+	constructor(options: S3ReadStreamOptions, nodeReadableStreamOptions?: ReadableOptions) {
 		super(nodeReadableStreamOptions);
 		this._maxContentLength = options.maxLength;
 		this._s3 = options.s3;
 		this._s3StreamParams = options.parameters;
-		this._currentCursorPosition = options.currentCursorPos || 0;
-    	this._s3DataRange = options.byteRange || 1024 * 1024;
+		this._startByte = options.startByte;
+		this._endByte = options.endByte;
 	}
-  
-  adjustByteRange(bytes: number) {
-    this._s3DataRange = bytes;
-  }
 
 	_read() {
-		if (this._currentCursorPosition > this._maxContentLength) {
+		if (this._endByte > this._maxContentLength || this._endByte < this._startByte || this._startByte < 0) {
 			this.push(null);
 		} else {
-			const range = this._currentCursorPosition + this._s3DataRange;
-			const adjustedRange =
-				range < this._maxContentLength ? range : this._maxContentLength;
-			this._s3StreamParams.Range = `bytes=${this._currentCursorPosition}-${adjustedRange}`;
-			this._currentCursorPosition = adjustedRange + 1;
+			this._s3StreamParams.Range = `bytes=${this._startByte}-${this._endByte}`;
 			this._s3.getObject(this._s3StreamParams, (error, data) => {
 				if (error) {
 					this.destroy(error);
 				} else {
 					this.push(data.Body);
-					// will terminate the stream flush
+					// will terminate the stream reading if the end byte is reached
 					this.push(null);
 				}
 			});
