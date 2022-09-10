@@ -1,6 +1,6 @@
 {
   "name": "s3-readstream-virtuali",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Drop in AWS S3 replacement read stream",
   "main": "dist/S3Readstream.js",
   "types": "dist/S3Readstream.d.js",
